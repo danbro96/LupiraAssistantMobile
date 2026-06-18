@@ -1,0 +1,69 @@
+import boundaries from 'eslint-plugin-boundaries';
+import reactHooks from 'eslint-plugin-react-hooks';
+import tseslint from 'typescript-eslint';
+
+/** v6 object-selector helper: `to('domain','config')` → [{ to: { type: 'domain' } }, …]. */
+const to = (...types) => types.map((t) => ({ to: { type: t } }));
+
+// One job: enforce the layered architecture (see the plan / ARCHITECTURE). Only the import-boundary
+// rule + hook correctness are on; this is a structural gate, not a style overhaul. The dependency
+// graph is downward-only:
+//   domain → nothing (pure, node-testable)
+//   data → domain
+//   collector → data/domain          (the headless background task must NOT reach state/ui/sync)
+//   sync → data/domain               (the sync-status store lives IN sync/, so sync never imports state)
+//   state → sync/collector/data/domain
+//   ui → everything below it
+// The cross-cutting leaves (config, debug, feedback) may be imported by anyone but import no app layer.
+export default [
+  {
+    ignores: [
+      'node_modules/**',
+      '*.config.js',
+      '*.config.mjs',
+      '*.config.ts',
+    ],
+  },
+  {
+    files: ['src/**/*.{ts,tsx}', 'App.tsx', 'index.ts'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+    plugins: { boundaries, 'react-hooks': reactHooks },
+    settings: {
+      'boundaries/elements': [
+        { type: 'domain', pattern: 'src/domain/**' },
+        { type: 'data', pattern: 'src/data/**' },
+        { type: 'collector', pattern: 'src/collector/**' },
+        { type: 'sync', pattern: 'src/sync/**' },
+        { type: 'state', pattern: 'src/state/**' },
+        { type: 'ui', pattern: 'src/ui/**' },
+        { type: 'config', pattern: 'src/config/**' },
+        { type: 'debug', pattern: 'src/debug/**' },
+        { type: 'feedback', pattern: 'src/feedback/**' },
+        { type: 'polyfills', pattern: 'src/polyfills/**' },
+      ],
+      'import/resolver': { typescript: { alwaysTryTypes: true } },
+    },
+    rules: {
+      'boundaries/dependencies': ['error', {
+        default: 'disallow',
+        rules: [
+          { from: { type: 'domain' }, allow: to('domain') },
+          { from: { type: 'data' }, allow: to('data', 'domain', 'config', 'debug', 'feedback') },
+          { from: { type: 'collector' }, allow: to('collector', 'data', 'domain', 'config', 'debug', 'feedback') },
+          { from: { type: 'sync' }, allow: to('sync', 'data', 'domain', 'config', 'debug', 'feedback') },
+          { from: { type: 'state' }, allow: to('state', 'sync', 'collector', 'data', 'domain', 'config', 'debug', 'feedback') },
+          { from: { type: 'ui' }, allow: to('ui', 'state', 'sync', 'collector', 'data', 'domain', 'config', 'debug', 'feedback') },
+          { from: { type: 'config' }, allow: to('config') },
+          { from: { type: 'debug' }, allow: to('debug') },
+          { from: { type: 'feedback' }, allow: to('feedback') },
+          { from: { type: 'polyfills' }, allow: to('polyfills') },
+        ],
+      }],
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+    },
+  },
+];
