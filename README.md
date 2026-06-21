@@ -1,4 +1,4 @@
-# Lupira Health Mobile
+# Lupira Assistant Mobile
 
 A cross-platform (React Native / Expo) **background telemetry uploader** for a personal/family
 health-tracking backend, [LupiraHealthApi](https://github.com/) (a .NET sibling of LupiraTasksApi).
@@ -19,7 +19,7 @@ Architecture and conventions mirror the sibling app **LupiraTasksMobile** (Expo 
 - Node 20+ and npm
 - A **custom dev client** (Expo Go cannot run background location). You'll build one with EAS or
   locally via `expo run:*`.
-- The LupiraHealthApi host reachable, and an Authentik `health` OIDC application/provider.
+- The LupiraHealthApi host reachable, and an Authentik `assistant` OIDC application/provider.
 
 ## Setup
 
@@ -46,11 +46,11 @@ npx expo install expo-location expo-task-manager expo-sensors expo-battery expo-
 Edit `src/config/env.ts` and `src/data/auth/oidc-config.ts`:
 
 - `DEFAULT_API_URL` — the LupiraHealthApi base URL (also overridable in-app on the settings screen).
-- `OIDC_ISSUER` / `OIDC_CLIENT_ID` — must match the Authentik `health` provider. The redirect URI is
-  `lupirahealth://oauthredirect` (register it on the provider).
+- `OIDC_ISSUER` / `OIDC_CLIENT_ID` — must match the Authentik `assistant` provider. The redirect URI is
+  `lupiraassistant://oauthredirect` (register it on the provider).
 - `SENTRY_DSN` — optional; empty disables crash reporting.
 
-The iOS bundle id / Android package (`com.lupira.health`) and `scheme` (`lupirahealth`) live in
+The iOS bundle id / Android package (`com.lupira.assistant`) and `scheme` (`lupiraassistant`) live in
 `app.config.ts`.
 
 ---

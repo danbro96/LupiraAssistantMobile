@@ -97,7 +97,7 @@ export function RegisterDeviceScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Lupira Health</Text>
+      <Text style={styles.title}>Lupira Assistant</Text>
       <Text style={styles.subtitle}>Set this phone up to record telemetry.</Text>
 
       {!authed ? (

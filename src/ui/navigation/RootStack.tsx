@@ -13,7 +13,7 @@ export function RootStack() {
   return (
     <Stack.Navigator>
       {registered ? (
-        <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Lupira Health' }} />
+        <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Lupira Assistant' }} />
       ) : (
         <Stack.Screen name="RegisterDevice" component={RegisterDeviceScreen} options={{ headerShown: false }} />
       )}

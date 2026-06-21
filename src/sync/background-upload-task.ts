@@ -5,7 +5,7 @@ import { logDebug } from '../debug/log';
 
 // Defined at module top level: registered during the headless context's cold start.
 
-export const UPLOAD_TASK = 'lupira.health.upload';
+export const UPLOAD_TASK = 'lupira.assistant.upload';
 
 TaskManager.defineTask(UPLOAD_TASK, async () => {
   try {
