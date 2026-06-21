@@ -41,7 +41,7 @@ export async function saveCredentials(resp: RegisterDeviceResponse, record: Heal
     SecureStore.setItemAsync(SECURE_KEYS.apiKey, resp.apiKey),
     SecureStore.setItemAsync(SECURE_KEYS.keyId, resp.keyId),
     SecureStore.setItemAsync(SECURE_KEYS.deviceId, resp.device.id),
-    SecureStore.setItemAsync(SECURE_KEYS.healthRecordId, resp.device.healthRecordId),
+    SecureStore.setItemAsync(SECURE_KEYS.healthRecordId, record.id),
     SecureStore.setItemAsync(SECURE_KEYS.deviceLabel, resp.device.label),
     SecureStore.setItemAsync(SECURE_KEYS.recordSlug, record.slug),
   ]);

@@ -1,14 +1,14 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
-import { DEFAULT_API_URL } from '../config/env';
+import { DEFAULT_HEALTH_API_URL, DEFAULT_LOCATION_API_URL } from '../config/env';
 import { SECURE_KEYS } from '../config/secure-keys';
-import { setOidcAuthPort, setDeviceKeyPort } from '../data/api/auth-ports';
+import { setOidcAuthPort, setDeviceKeyPort, type ApiBase } from '../data/api/auth-ports';
 import { refreshTokens, RefreshError } from '../data/auth/oidc';
 import { getApiKey } from '../data/secure/device-credentials';
 import { logDebug } from '../debug/log';
 import { toast } from '../feedback/toast';
 
-// OIDC session, used ONLY by registration/records endpoints (ingest uses the device key).
+// OIDC session — used by device registration (LocationApi) and health record/bootstrap (HealthApi); ingest uses the device key.
 
 let refreshing: Promise<string | null> | null = null;
 
@@ -25,7 +25,8 @@ export interface Session {
 
 interface AuthState {
   loaded: boolean;
-  apiUrl: string;
+  healthApiUrl: string;
+  locationApiUrl: string;
   token: string | null;
   refreshToken: string | null;
   expiresAt: number | null;
@@ -34,7 +35,8 @@ interface AuthState {
 
 interface AuthActions {
   load: () => Promise<void>;
-  setApiUrl: (apiUrl: string) => Promise<void>;
+  setHealthApiUrl: (url: string) => Promise<void>;
+  setLocationApiUrl: (url: string) => Promise<void>;
   setSession: (session: Session, user: AuthUser) => Promise<void>;
   clearSession: (opts?: { reason?: 'expired' }) => Promise<void>;
   refreshIfNeeded: (opts?: { force?: boolean; sentToken?: string }) => Promise<string | null>;
@@ -43,15 +45,17 @@ interface AuthActions {
 
 export const useAuth = create<AuthState & AuthActions>((set, get) => ({
   loaded: false,
-  apiUrl: DEFAULT_API_URL,
+  healthApiUrl: DEFAULT_HEALTH_API_URL,
+  locationApiUrl: DEFAULT_LOCATION_API_URL,
   token: null,
   refreshToken: null,
   expiresAt: null,
   user: null,
 
   load: async () => {
-    const [apiUrl, token, refreshToken, expiresAt, userSub, userName] = await Promise.all([
-      SecureStore.getItemAsync(SECURE_KEYS.apiUrl),
+    const [healthApiUrl, locationApiUrl, token, refreshToken, expiresAt, userSub, userName] = await Promise.all([
+      SecureStore.getItemAsync(SECURE_KEYS.healthApiUrl),
+      SecureStore.getItemAsync(SECURE_KEYS.locationApiUrl),
       SecureStore.getItemAsync(SECURE_KEYS.oidcToken),
       SecureStore.getItemAsync(SECURE_KEYS.oidcRefresh),
       SecureStore.getItemAsync(SECURE_KEYS.oidcExpires),
@@ -60,7 +64,8 @@ export const useAuth = create<AuthState & AuthActions>((set, get) => ({
     ]);
     set({
       loaded: true,
-      apiUrl: apiUrl || DEFAULT_API_URL,
+      healthApiUrl: healthApiUrl || DEFAULT_HEALTH_API_URL,
+      locationApiUrl: locationApiUrl || DEFAULT_LOCATION_API_URL,
       token: token ?? null,
       refreshToken: refreshToken ?? null,
       expiresAt: expiresAt ? Number(expiresAt) : null,
@@ -68,9 +73,14 @@ export const useAuth = create<AuthState & AuthActions>((set, get) => ({
     });
   },
 
-  setApiUrl: async (apiUrl) => {
-    await SecureStore.setItemAsync(SECURE_KEYS.apiUrl, apiUrl);
-    set({ apiUrl });
+  setHealthApiUrl: async (url) => {
+    await SecureStore.setItemAsync(SECURE_KEYS.healthApiUrl, url);
+    set({ healthApiUrl: url });
+  },
+
+  setLocationApiUrl: async (url) => {
+    await SecureStore.setItemAsync(SECURE_KEYS.locationApiUrl, url);
+    set({ locationApiUrl: url });
   },
 
   setSession: async (session, user) => {
@@ -155,13 +165,16 @@ export const useAuth = create<AuthState & AuthActions>((set, get) => ({
 }));
 
 // Runs at module load (App.tsx imports the store during bootstrap, before any request fires).
+const apiUrlFor = (base: ApiBase): string =>
+  base === 'location' ? useAuth.getState().locationApiUrl : useAuth.getState().healthApiUrl;
+
 setOidcAuthPort({
-  getApiUrl: () => useAuth.getState().apiUrl,
+  getApiUrl: apiUrlFor,
   getToken: () => useAuth.getState().token,
   refresh: (force, sentToken) => useAuth.getState().refreshIfNeeded({ force, sentToken }),
 });
 
 setDeviceKeyPort({
-  getApiUrl: () => useAuth.getState().apiUrl,
+  getApiUrl: apiUrlFor,
   getApiKey: () => getApiKey(),
 });

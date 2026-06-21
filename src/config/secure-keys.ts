@@ -1,7 +1,8 @@
 // The device API key + secret are the ONLY truly secret values — keep them under `apiKey` only, never in Zustand/SQLite/AsyncStorage/logs.
 
 export const SECURE_KEYS = {
-  apiUrl: 'lupira.assistant.apiUrl',
+  healthApiUrl: 'lupira.assistant.healthApiUrl',
+  locationApiUrl: 'lupira.assistant.locationApiUrl',
 
   oidcToken: 'lupira.assistant.oidc.token',
   oidcRefresh: 'lupira.assistant.oidc.refreshToken',

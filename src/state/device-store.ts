@@ -61,7 +61,7 @@ export const useDevice = create<DeviceState & DeviceActions>((set) => ({
   register: async (label) => {
     try {
       const record = await bootstrap();
-      const resp = await registerDevice({ healthRecordId: record.id, kind: 'Phone', label });
+      const resp = await registerDevice({ kind: 'Phone', label });
       await saveCredentials(resp, record);
 
       // fresh device: reset local streams, clear stale buffers, seed sync state
@@ -79,7 +79,7 @@ export const useDevice = create<DeviceState & DeviceActions>((set) => ({
         registered: true,
         deviceId: resp.device.id,
         keyId: resp.keyId,
-        healthRecordId: resp.device.healthRecordId,
+        healthRecordId: record.id,
         recordSlug: record.slug,
         label: resp.device.label,
         kind: 'Phone',

@@ -1,7 +1,8 @@
 # Lupira Assistant Mobile
 
-A cross-platform (React Native / Expo) **background telemetry uploader** for a personal/family
-health-tracking backend, [LupiraHealthApi](https://github.com/) (a .NET sibling of LupiraTasksApi).
+A cross-platform (React Native / Expo) **background telemetry uploader**. GPS fixes + device registration go to
+[LupiraLocationApi](https://github.com/); the personal/family health record lives on
+[LupiraHealthApi](https://github.com/) (a .NET sibling of LupiraTasksApi).
 
 It collects GPS fixes in the background — even when the app is closed — buffers them locally while
 offline, and **store-and-forwards** them to the server in idempotent NDJSON batches when connectivity
@@ -19,7 +20,7 @@ Architecture and conventions mirror the sibling app **LupiraTasksMobile** (Expo 
 - Node 20+ and npm
 - A **custom dev client** (Expo Go cannot run background location). You'll build one with EAS or
   locally via `expo run:*`.
-- The LupiraHealthApi host reachable, and an Authentik `assistant` OIDC application/provider.
+- The LupiraLocationApi and LupiraHealthApi hosts reachable, and an Authentik `assistant` OIDC application/provider.
 
 ## Setup
 
@@ -45,7 +46,8 @@ npx expo install expo-location expo-task-manager expo-sensors expo-battery expo-
 
 Edit `src/config/env.ts` and `src/data/auth/oidc-config.ts`:
 
-- `DEFAULT_API_URL` — the LupiraHealthApi base URL (also overridable in-app on the settings screen).
+- `DEFAULT_LOCATION_API_URL` / `DEFAULT_HEALTH_API_URL` — the LocationApi (GPS ingest + device registration) and
+  HealthApi (health record) base URLs (both overridable in-app on the settings screen).
 - `OIDC_ISSUER` / `OIDC_CLIENT_ID` — must match the Authentik `assistant` provider. The redirect URI is
   `lupiraassistant://oauthredirect` (register it on the provider).
 - `SENTRY_DSN` — optional; empty disables crash reporting.
@@ -59,8 +61,8 @@ The iOS bundle id / Android package (`com.lupira.assistant`) and `scheme` (`lupi
 
 ### Onboarding (one-time)
 1. **Sign in** with Authentik (PKCE public client).
-2. `POST /api/me/bootstrap` → personal health record; `POST /api/devices {kind:"Phone"}` → device +
-   one-time `apiKey` (`{keyId}.{secret}`).
+2. `POST /api/me/bootstrap` (HealthApi) → personal health record; `POST /api/devices {kind:"Phone"}` (LocationApi)
+   → device + one-time `apiKey` (`{keyId}.{secret}`).
 3. The `apiKey` is stored in the **OS secure keystore** only (never in Zustand/SQLite/logs; the debug
    logger redacts it defensively).
 

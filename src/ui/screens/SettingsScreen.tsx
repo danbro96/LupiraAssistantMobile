@@ -17,10 +17,12 @@ export function SettingsScreen() {
   const device = useDevice();
   const collector = useCollector();
   const status = useSyncStatus();
-  const apiUrl = useAuth((s) => s.apiUrl);
+  const locationApiUrl = useAuth((s) => s.locationApiUrl);
+  const healthApiUrl = useAuth((s) => s.healthApiUrl);
   const mirror = useSyncStatus((s) => s.mirror);
 
-  const [apiUrlDraft, setApiUrlDraft] = useState(apiUrl);
+  const [locationUrlDraft, setLocationUrlDraft] = useState(locationApiUrl);
+  const [healthUrlDraft, setHealthUrlDraft] = useState(healthApiUrl);
 
   const refresh = useCallback(async () => {
     if (!device.deviceId) return;
@@ -63,9 +65,12 @@ export function SettingsScreen() {
     })();
   }
 
-  async function onSaveApiUrl() {
-    await useAuth.getState().setApiUrl(apiUrlDraft.trim());
-    toast('API URL saved.');
+  async function onSaveUrls() {
+    await Promise.all([
+      useAuth.getState().setLocationApiUrl(locationUrlDraft.trim()),
+      useAuth.getState().setHealthApiUrl(healthUrlDraft.trim()),
+    ]);
+    toast('Server URLs saved.');
   }
 
   function onReRegister() {
@@ -122,19 +127,29 @@ export function SettingsScreen() {
         <Button title="Upload now" onPress={onUploadNow} style={styles.btn} />
       </View>
 
-      <Text style={styles.section}>SERVER</Text>
+      <Text style={styles.section}>SERVERS</Text>
       <View style={styles.card}>
-        <Text style={styles.rowLabel}>API base URL</Text>
+        <Text style={styles.rowLabel}>Location API URL</Text>
         <TextInput
-          value={apiUrlDraft}
-          onChangeText={setApiUrlDraft}
+          value={locationUrlDraft}
+          onChangeText={setLocationUrlDraft}
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="url"
           style={styles.input}
           placeholderTextColor={c.textSubtle}
         />
-        <Button title="Save URL" variant="secondary" onPress={() => void onSaveApiUrl()} style={styles.btn} />
+        <Text style={[styles.rowLabel, { marginTop: spacing.sm }]}>Health API URL</Text>
+        <TextInput
+          value={healthUrlDraft}
+          onChangeText={setHealthUrlDraft}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+          style={styles.input}
+          placeholderTextColor={c.textSubtle}
+        />
+        <Button title="Save URLs" variant="secondary" onPress={() => void onSaveUrls()} style={styles.btn} />
       </View>
 
       <Button title="Re-register device" variant="destructive" onPress={onReRegister} style={styles.btn} />

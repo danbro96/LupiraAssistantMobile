@@ -7,9 +7,9 @@ export interface HealthRecord {
   displayName: string | null;
 }
 
+// LocationApi DeviceDto — owned directly by the Principal (no health record link).
 export interface Device {
   id: string;
-  healthRecordId: string;
   kind: string;
   label: string;
   externalId?: string | null;
@@ -18,7 +18,6 @@ export interface Device {
 }
 
 export interface RegisterDeviceRequest {
-  healthRecordId: string;
   kind: DeviceKind;
   label: string;
   externalId?: string;

@@ -1,11 +1,11 @@
-import { oidcAuthPort } from './auth-ports';
+import { oidcAuthPort, type ApiBase } from './auth-ports';
 import { coreFetch, joinUrl } from './http';
 import { ApiError } from '../../domain/api-error';
 import { isRetriableRequest } from '../../domain/retry-policy';
 
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function apiFetch<T>(path: string, init: RequestInit = {}, base: ApiBase = 'health'): Promise<T> {
   const auth = oidcAuthPort();
-  const apiUrl = auth.getApiUrl();
+  const apiUrl = auth.getApiUrl(base);
   if (!apiUrl) throw new ApiError(0, 'API base URL is not configured.');
 
   const method = init.method ?? 'GET';

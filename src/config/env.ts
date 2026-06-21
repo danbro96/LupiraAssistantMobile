@@ -1,5 +1,6 @@
-/** Overridden via the settings screen. */
-export const DEFAULT_API_URL = 'https://health-api.lupira.com';
+/** Both overridable via the settings screen. Location ingest + device registration → LocationApi; health record/bootstrap → HealthApi. */
+export const DEFAULT_HEALTH_API_URL = 'https://health-api.lupira.com';
+export const DEFAULT_LOCATION_API_URL = 'https://location-api.lupira.com';
 
 /** Keep in sync with app.config.ts. */
 export const APP_VERSION = '0.1.0';

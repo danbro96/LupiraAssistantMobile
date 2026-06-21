@@ -1,13 +1,16 @@
 // Dependency-inversion seams so the data layer reads the live token/key/base URL without importing the state layer.
 
+/** Which backend a call targets: location ingest + device registration → LocationApi; everything else → HealthApi. */
+export type ApiBase = 'health' | 'location';
+
 export interface OidcAuthPort {
-  getApiUrl: () => string;
+  getApiUrl: (base: ApiBase) => string;
   getToken: () => string | null;
   refresh: (force?: boolean, sentToken?: string) => Promise<string | null>;
 }
 
 export interface DeviceKeyPort {
-  getApiUrl: () => string;
+  getApiUrl: (base: ApiBase) => string;
   getApiKey: () => Promise<string | null>;
 }
 
