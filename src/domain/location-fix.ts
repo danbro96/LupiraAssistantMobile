@@ -1,12 +1,8 @@
-// The location wire contract — the exact snake_case JSON shape the server's LocationIngestService
-// accepts (one per NDJSON line). This module is PURE (no expo-location import) so it's unit-testable
-// in node; the collector passes a structural LocationSample (the shape of expo-location's
-// LocationObject) and the derived motion/provider context.
-
+// snake_case wire contract the server's LocationIngestService accepts (one per NDJSON line).
 export type LocationProvider = 'gps' | 'network' | 'fused' | 'passive';
 export type ActivityKind = 'still' | 'walk' | 'run' | 'cycle' | 'vehicle' | 'unknown';
 
-/** A buffered location fix in server wire form, MINUS `seq` (assigned atomically at insert time). */
+// Wire fix MINUS `seq` (assigned atomically at insert time).
 export interface WireFix {
   ts: string;
   lat: number;
@@ -26,14 +22,14 @@ export interface WireFix {
   is_mock: boolean;
 }
 
-/** The exact set of wire keys. Used by the contract test to assert no `*_id` field ever leaks. */
+// Contract test asserts no `*_id` field ever leaks.
 export const WIRE_FIX_KEYS: readonly (keyof WireFix)[] = [
   'ts', 'lat', 'lon', 'accuracy_m', 'altitude_m', 'vertical_acc_m', 'heading_deg', 'heading_acc_deg',
   'speed_mps', 'speed_acc_mps', 'provider', 'activity', 'activity_conf', 'battery_pct',
   'is_moving', 'is_mock',
 ];
 
-/** Structural shape of an expo-location LocationObject (kept local so domain stays native-free). */
+// Structural shape of an expo-location LocationObject (kept local so domain stays native-free).
 export interface LocationSample {
   coords: {
     latitude: number;
@@ -48,15 +44,13 @@ export interface LocationSample {
   mocked?: boolean; // Android only; undefined elsewhere
 }
 
-/** Per-batch context the collector derives once and applies to every fix in the batch. */
 export interface MapContext {
   batteryPct: number | null;
   provider: LocationProvider;
   activity: ActivityKind;
   activityConf: number | null;
   isMoving: boolean;
-  /** Injected current time (ms) — also used to clamp a future timestamp (server rejects ts>now+5min). */
-  nowMs: number;
+  nowMs: number; // clamps a future ts (server rejects ts>now+5min)
 }
 
 function round1(v: number | null | undefined): number | null {
@@ -64,17 +58,13 @@ function round1(v: number | null | undefined): number | null {
   return Math.round(v * 10) / 10;
 }
 
-/** Android reports `-1` for unknown heading/speed; map those (and nullish) to null. */
+// Android reports `-1` for unknown heading/speed → null.
 function posOrNull(v: number | null | undefined): number | null {
   if (v === null || v === undefined || Number.isNaN(v) || v < 0) return null;
   return v;
 }
 
-/**
- * Map a raw location sample + context to the wire fix. Keeps low-accuracy fixes (accuracy_m carries
- * the truth — never dropped here). Clamps a future timestamp to `nowMs` so a bad device clock can't
- * produce a `ts_out_of_range` reject. Never emits any principal_id/device_id field.
- */
+// Clamps a future ts to `nowMs` so a bad device clock can't trigger `ts_out_of_range`. Never emits an *_id field.
 export function mapToWireFix(loc: LocationSample, ctx: MapContext): WireFix {
   const tsMs = Math.min(loc.timestamp, ctx.nowMs);
   return {

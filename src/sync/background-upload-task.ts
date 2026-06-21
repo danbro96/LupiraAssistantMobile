@@ -3,11 +3,7 @@ import * as TaskManager from 'expo-task-manager';
 import { kickSync } from './sync-engine';
 import { logDebug } from '../debug/log';
 
-// Periodic background flush. The OS wakes this opportunistically (minimum ~15 min; iOS decides actual
-// cadence) to resume the cursor, poll the pause state, and drain the buffer — so fixes captured while
-// the app is backgrounded/killed still upload without the user opening the app. Defined at module top
-// level (imported by index.ts) so it registers during the headless context's cold start. The
-// single-flight lock in sync-engine coordinates with the location task and foreground triggers.
+// Defined at module top level: registered during the headless context's cold start.
 
 export const UPLOAD_TASK = 'lupira.health.upload';
 

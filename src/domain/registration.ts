@@ -1,7 +1,4 @@
-// DTOs for the OIDC-authenticated registration endpoints (POST /api/me/bootstrap, GET /api/records,
-// POST /api/devices). Pure types.
-
-/** Server `DeviceKind` enum names (case-insensitive on the wire). The phone registers as "Phone". */
+// Server `DeviceKind` enum names (case-insensitive on the wire). The phone registers as "Phone".
 export type DeviceKind = 'SmartRing' | 'Phone' | 'Watch' | 'Scale' | 'BloodPressureCuff' | 'Other';
 
 export interface HealthRecord {
@@ -29,8 +26,6 @@ export interface RegisterDeviceRequest {
 
 export interface RegisterDeviceResponse {
   device: Device;
-  /** Public key id (a GUID). Safe to display. */
   keyId: string;
-  /** The full `{keyId:N}.{secret}` ingest key — shown ONCE. Store in the secure keystore, never log. */
-  apiKey: string;
+  apiKey: string; // full `{keyId:N}.{secret}`, shown ONCE — store in keystore, never log
 }

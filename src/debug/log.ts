@@ -1,16 +1,10 @@
 import { create } from 'zustand';
 import * as Sentry from '@sentry/react-native';
 
-// Shared in-memory debug trace, rendered on-device by a debug panel (in __DEV__), echoed to the
-// console (Metro / `react-native log-android`), and recorded as Sentry breadcrumbs. Used by the
-// registration, collector, and sync paths to diagnose issues without a terminal attached.
-//
-// SECURITY: every message is run through `redact()` before it leaves this module, so a device API
-// key/secret can never end up in the buffer, the console, or a Sentry breadcrumb even if a caller
-// accidentally passes one.
+// SECURITY: everything is run through redact() so a device key/secret can't reach the buffer, console, or Sentry.
 
 export interface DebugLogEntry {
-  t: string; // ISO timestamp
+  t: string;
   stage: string;
   detail?: string;
 }
@@ -29,16 +23,14 @@ export const useDebugLog = create<DebugLogState>(set => ({
   clear: () => set({ entries: [] }),
 }));
 
-// Device key wire format is `{32hex}.{64hex}`; a `DeviceKey ` Authorization header carries it too.
+// Device key wire format is `{32hex}.{64hex}`, also carried in a `DeviceKey ` Authorization header.
 const DEVICE_KEY_RE = /\b[0-9a-fA-F]{32}\.[0-9a-fA-F]{16,}\b/g;
 const DEVICE_KEY_HEADER_RE = /DeviceKey\s+\S+/g;
 
-/** Strip anything resembling a device key / secret from a string before it is logged. */
 export function redact(value: string): string {
   return value.replace(DEVICE_KEY_HEADER_RE, 'DeviceKey [redacted]').replace(DEVICE_KEY_RE, '[redacted-key]');
 }
 
-/** Record one stage to the buffer, the console, and a Sentry breadcrumb. No PII / secrets in details. */
 export function logDebug(stage: string, detail?: string): void {
   const t = new Date().toISOString();
   const safeStage = redact(stage);
@@ -53,7 +45,7 @@ export function logDebug(stage: string, detail?: string): void {
       data: safeDetail ? { detail: safeDetail } : undefined,
     });
   } catch {
-    // Sentry not initialised yet — the buffer + console still capture it.
+    // Sentry not initialised yet.
   }
 }
 

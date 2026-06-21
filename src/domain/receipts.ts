@@ -1,7 +1,6 @@
-// Wire types for ingest receipts + cursor/state responses. camelCase, matching the server's default
-// System.Text.Json output.
+// camelCase, matching the server's default System.Text.Json output.
 
-/** Per-row rejection reason codes returned by the server. `seq` is null for batch-level rejects. */
+// `seq` is null for batch-level rejects.
 export type RejectReason =
   | 'invalid_json'
   | 'missing_seq'
@@ -23,7 +22,6 @@ export interface IngestReject {
   reason: RejectReason | string;
 }
 
-/** Common receipt fields shared by all ingest endpoints. */
 export interface IngestReceiptBase {
   submitted: number;
   inserted: number;
@@ -33,7 +31,7 @@ export interface IngestReceiptBase {
   rejects: IngestReject[];
 }
 
-/** Location ingest adds `paused` (the kill-switch signal); ring/summaries receipts do not. */
+// Location ingest adds `paused` (kill-switch); ring/summaries do not.
 export interface LocationIngestReceipt extends IngestReceiptBase {
   paused: boolean;
 }

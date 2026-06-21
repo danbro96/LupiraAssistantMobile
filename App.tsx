@@ -15,7 +15,6 @@ import { registerUploadTask } from './src/sync/background-upload-task';
 import { SENTRY_DSN, APP_VERSION } from './src/config/env';
 import { lightColors, darkColors, type Palette } from './src/ui/theme';
 
-/** React Navigation theme derived from our palette so headers/backgrounds match the app. */
 function navTheme(scheme: string | null | undefined): Theme {
   const p = scheme === 'dark' ? darkColors : lightColors;
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
@@ -25,7 +24,7 @@ function navTheme(scheme: string | null | undefined): Theme {
   };
 }
 
-// Crash analytics. SENTRY_DSN is a public client key in src/config/env.ts — Sentry no-ops when empty.
+// SENTRY_DSN is a public client key; Sentry no-ops when empty.
 Sentry.init({
   dsn: SENTRY_DSN,
   enabled: !!SENTRY_DSN,
@@ -56,8 +55,6 @@ function App() {
     void (async () => {
       await Promise.all([useAuth.getState().load(), useDevice.getState().load()]);
       await useAuth.getState().refreshIfNeeded();
-      // Reconcile the background collector (re-register the task if the OS dropped it after a kill),
-      // register the periodic upload task, then do an initial resume + flush.
       await useCollector.getState().hydrate();
       await registerUploadTask();
       void kickSync({ resume: true, poll: true });

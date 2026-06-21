@@ -14,7 +14,6 @@ interface Props {
   accessibilityLabel?: string;
 }
 
-/** Shared button. Replaces per-screen inline Pressable + Text blocks. */
 export function Button({ title, onPress, variant = 'primary', disabled, loading, style, accessibilityLabel }: Props) {
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);

@@ -3,10 +3,6 @@ import { coreFetch, joinUrl } from './http';
 import { ApiError } from '../../domain/api-error';
 import { isRetriableRequest } from '../../domain/retry-policy';
 
-// JSON client for the OIDC-authenticated registration endpoints (bootstrap / records / devices).
-// Owns base URL + bearer injection + reactive re-auth on 401, and parses the JSON body. (Kept
-// structured so an Orval-generated client can replace it once LupiraHealthApi's OpenAPI is wired.)
-
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const auth = oidcAuthPort();
   const apiUrl = auth.getApiUrl();
@@ -30,7 +26,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
       const res = await coreFetch(fullUrl, { ...init, headers }, { retriable });
       return await parseBody<T>(res);
     } catch (e) {
-      // Reactive re-auth on a terminal 401: force a refresh and retry once.
+      // 401 → force a token refresh and retry once.
       if (e instanceof ApiError && e.status === 401 && !triedReauth) {
         triedReauth = true;
         const fresh = await auth.refresh(true, token ?? undefined);

@@ -1,9 +1,6 @@
 import type { ExpoConfig } from 'expo/config';
 
-// Expo prebuild/CNG config (native android/ios dirs are generated and git-ignored). The plugin +
-// permission blocks below are the load-bearing part for background telemetry: always-on location,
-// a foreground service on Android, the iOS background location mode, and motion/activity access.
-// Rationale strings are user-facing — keep them honest about what and why.
+// Native android/ios dirs are generated and git-ignored. The plugin + permission blocks below are load-bearing for background telemetry.
 
 const LOCATION_ALWAYS_RATIONALE =
   'Lupira Health keeps recording your location in the background — even when the app is closed — '
@@ -25,8 +22,7 @@ const config: ExpoConfig = {
     supportsTablet: true,
     bundleIdentifier: 'com.lupira.health',
     infoPlist: {
-      // Continue receiving location updates while backgrounded. The expo-background-task plugin
-      // appends its own 'processing' mode + BGTaskScheduler identifiers, so we only declare 'location'.
+      // Only 'location'; expo-background-task appends its own 'processing' mode + BGTaskScheduler ids.
       UIBackgroundModes: ['location'],
       NSLocationWhenInUseUsageDescription: LOCATION_WHEN_IN_USE_RATIONALE,
       NSLocationAlwaysAndWhenInUseUsageDescription: LOCATION_ALWAYS_RATIONALE,
@@ -52,8 +48,7 @@ const config: ExpoConfig = {
     [
       'expo-location',
       {
-        // Wires ACCESS_BACKGROUND_LOCATION + the Android foreground-service plumbing so
-        // startLocationUpdatesAsync can run with the app backgrounded/killed.
+        // Lets startLocationUpdatesAsync run with the app backgrounded/killed.
         isAndroidBackgroundLocationEnabled: true,
         isAndroidForegroundServiceEnabled: true,
         locationAlwaysAndWhenInUsePermission: LOCATION_ALWAYS_RATIONALE,

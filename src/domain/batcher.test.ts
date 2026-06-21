@@ -13,7 +13,7 @@ describe('selectBatch', () => {
   });
 
   it('caps by byte size (accounting for newline separators)', () => {
-    // 5 rows of 10 bytes + 4 separators = 54 bytes; maxBytes 35 fits 3 rows (10+11+11=32, +11=43>35).
+    // 3 rows = 10+11+11=32B; a 4th (+11=43) exceeds maxBytes 35.
     const out = selectBatch(items(5, 10), { maxLines: 100, maxBytes: 35 });
     expect(out).toHaveLength(3);
   });

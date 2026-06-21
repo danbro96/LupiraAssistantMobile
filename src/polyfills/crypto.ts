@@ -1,9 +1,6 @@
 import * as ExpoCrypto from 'expo-crypto';
 
-// React Native (Hermes) has no global `crypto`, so `uuid`'s generator throws
-// "Property 'crypto' doesn't exist" the moment we mint an id. Provide the Web Crypto methods
-// uuid needs from expo-crypto (already a native dependency — no extra package/rebuild).
-// This module MUST be imported before any uuid usage (see index.ts).
+// Hermes has no global `crypto`; back the methods uuid needs with expo-crypto. MUST be imported before any uuid usage.
 
 const target = globalThis as unknown as {
   crypto?: { getRandomValues?: unknown; randomUUID?: unknown };

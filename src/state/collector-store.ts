@@ -8,9 +8,7 @@ import { useSyncStatus } from '../sync/sync-status';
 import { kickSync } from '../sync/sync-engine';
 import { logDebug } from '../debug/log';
 
-// Orchestrates the background collector from the UI: permission escalation, start/stop, and launch
-// reconciliation (re-register the task if the OS dropped it after a kill). `collectingDesired` in
-// collector_meta is authoritative so the launch reconciler knows the user's intent.
+// `collectingDesired` in collector_meta is authoritative so launch reconciliation knows the user's intent.
 
 interface CollectorState {
   loaded: boolean;
@@ -45,8 +43,7 @@ export const useCollector = create<CollectorState & CollectorActions>((set) => (
       collectorMeta.isPausedCached(db),
     ]);
     let collecting = running;
-    // The OS may not restore the task after a kill — re-register if the user wants collection and we
-    // still hold background permission.
+    // OS may not restore the task after a kill: re-register if desired and we still hold background permission
     if (desired && stage === 'background' && !running) {
       try {
         await registration.startCollecting(MotionState.Unknown);
@@ -79,7 +76,6 @@ export const useCollector = create<CollectorState & CollectorActions>((set) => (
     }
     set({ collecting: true, starting: false });
     reflectStatus(true, false);
-    // Seed the resume cursor + pause state and flush any buffered fixes.
     void kickSync({ resume: true, poll: true });
     logDebug('collector:started');
     return { ok: true, stage };

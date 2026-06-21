@@ -3,9 +3,7 @@ import { LOCATION_TASK, FGS_NOTIFICATION_BODY, FGS_NOTIFICATION_COLOR, FGS_NOTIF
 import { paramsFor } from '../domain/sampling';
 import { MotionState } from '../domain/motion-state';
 
-// Start/stop/reconfigure the background location-updates task. expo-location has no "update options on
-// a running task" API, so adaptive sampling = stop + restart with new options (reconfigure). The task
-// body is defined in location-task.ts; this module only references it by name.
+// reconfigure = stop + restart: expo-location has no live-update-options API.
 
 export function isCollecting(): Promise<boolean> {
   return Location.hasStartedLocationUpdatesAsync(LOCATION_TASK);
@@ -20,7 +18,6 @@ export async function stopCollecting(): Promise<void> {
   if (await isCollecting()) await Location.stopLocationUpdatesAsync(LOCATION_TASK);
 }
 
-/** Re-apply sampling params for a new motion state (stop + start). Debounced by the caller. */
 export async function reconfigure(state: MotionState): Promise<void> {
   if (await isCollecting()) await Location.stopLocationUpdatesAsync(LOCATION_TASK);
   await applyUpdates(state);

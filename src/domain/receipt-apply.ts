@@ -1,22 +1,13 @@
 import type { IngestReceiptBase, LocationIngestReceipt } from './receipts';
 import { isPermanentReject } from './reject-reasons';
 
-// The pure core of the uploader: given a 202 receipt and the seqs we sent, decide which buffered rows
-// to delete (confirmed), which to drop as permanently rejected, how far the high-water advances, and
-// whether the server is paused. Idempotent server semantics make this safe: `inserted` AND
-// `duplicates` are both confirmed-on-server, so both are deleted locally.
-
+// inserted+duplicates are both server-confirmed (idempotent) → delete; permanent rejects → drop.
 export interface ApplyPlan {
-  /** Rows confirmed on the server (inserted or duplicate) — delete from the buffer. */
-  deleteSeqs: number[];
-  /** Permanently-rejected rows — mark rejected (kept for diagnostics, removed from pending). */
-  dropRejectSeqs: number[];
-  /** Highest resolved seq (confirmed or permanently dropped), for the last-uploaded high-water; null if none. */
-  advanceTo: number | null;
-  /** Server pause signal (location receipts only; treated false for ring/summaries). */
-  paused: boolean;
-  /** The batch exceeded the server cap — shrink next time (not a per-row drop). */
-  batchTooLarge: boolean;
+  deleteSeqs: number[]; // confirmed (inserted or duplicate)
+  dropRejectSeqs: number[]; // permanently rejected; mark rejected, kept for diagnostics
+  advanceTo: number | null; // highest resolved seq for the high-water
+  paused: boolean; // location receipts only; false for ring/summaries
+  batchTooLarge: boolean; // batch-level signal, not a per-row drop
 }
 
 function isLocationReceipt(r: IngestReceiptBase | LocationIngestReceipt): r is LocationIngestReceipt {
@@ -29,7 +20,7 @@ export function applyReceipt(
 ): ApplyPlan {
   const paused = isLocationReceipt(receipt) ? receipt.paused : false;
   if (paused) {
-    // Body was discarded server-side; keep the buffered rows and stop. They'll upload on resume.
+    // Body discarded server-side; keep buffered rows for upload on resume.
     return { deleteSeqs: [], dropRejectSeqs: [], advanceTo: null, paused: true, batchTooLarge: false };
   }
 
@@ -48,9 +39,9 @@ export function applyReceipt(
   for (const seq of sentSeqs) {
     const reason = rejectBySeq.get(seq);
     if (reason === undefined) {
-      deleteSeqs.push(seq); // inserted or duplicate → confirmed
+      deleteSeqs.push(seq);
     } else if (isPermanentReject(reason)) {
-      dropRejectSeqs.push(seq); // permanent → drop
+      dropRejectSeqs.push(seq);
     }
     // transient reject → leave buffered for retry
   }

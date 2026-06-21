@@ -3,9 +3,7 @@ import type { Db } from '../data/db/db';
 import { pendingCount as readPendingCount } from '../data/db/pending-fixes-repo';
 import * as syncStateRepo from '../data/db/sync-state-repo';
 
-// UI-facing collector + upload status. Lives in the SYNC layer (not state/) so the sync layer can
-// update it without importing upward — mirrors LupiraTasksMobile's sync/syncStatus.ts. The settings
-// screen subscribes here; `mirror` bumps to force re-reads of derived DB data.
+// Lives in the SYNC layer (not state/) so sync can update it without importing upward.
 
 export type CollectorStatus = 'off' | 'idle' | 'collecting' | 'paused';
 
@@ -49,12 +47,10 @@ export const useSyncStatus = create<SyncStatusState>((set) => ({
   patch: (p) => set(p),
 }));
 
-/** Notify subscribers (screens) that local data changed, so they reload. */
 export function bumpMirror(): void {
   useSyncStatus.getState().bumpMirror();
 }
 
-/** Pull the latest counts + last-receipt fields from the DB into the store (for the settings screen). */
 export async function refreshSyncStatus(db: Db, deviceId: string): Promise<void> {
   const [pending, state] = await Promise.all([
     readPendingCount(db),

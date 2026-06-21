@@ -5,9 +5,7 @@ import * as seqRepo from '../data/db/seq-repo';
 import * as syncState from '../data/db/sync-state-repo';
 import { logDebug } from '../debug/log';
 
-// On launch / reconnect: fetch the server cursor and drop any buffered fix the server has already
-// accepted (seq <= lastSeq) so we don't re-send it, and ensure the local seq counter never sits below
-// the server's high-water (matters after a reinstall).
+// Drop already-accepted fixes (seq <= lastSeq) and keep the local seq counter at/above server high-water (reinstall).
 
 export async function resumeFromCursor(db: Db, deviceId: string): Promise<void> {
   const cursor = await ingest.getCursor(deviceId);

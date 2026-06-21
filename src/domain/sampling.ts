@@ -1,11 +1,6 @@
 import { MotionState } from './motion-state';
 
-// Adaptive sampling: motion state → expo-location request options. Dense in vehicle/run, sparse when
-// still (which leans on iOS significant-location-change via coarse accuracy + large distance). Pure
-// + table-driven so every row is unit-tested. The numeric Accuracy/ActivityType values mirror
-// expo-location's enums exactly (so we stay dependency-free here yet pass valid values through).
-
-/** Mirrors expo-location's `Accuracy` enum (integer values). */
+// Motion state → expo-location request options. Numeric values mirror expo-location's enums (kept dependency-free).
 export const Accuracy = {
   Lowest: 1,
   Low: 2,
@@ -16,7 +11,6 @@ export const Accuracy = {
 } as const;
 export type AccuracyValue = (typeof Accuracy)[keyof typeof Accuracy];
 
-/** Mirrors expo-location's `ActivityType` enum (integer values). */
 export const ActivityType = {
   Other: 1,
   AutomotiveNavigation: 2,
@@ -29,14 +23,10 @@ export type ActivityTypeValue = (typeof ActivityType)[keyof typeof ActivityType]
 export interface SamplingParams {
   accuracy: AccuracyValue;
   activityType: ActivityTypeValue;
-  /** Minimum movement (m) between delivered fixes. */
-  distanceInterval: number;
-  /** Minimum time (ms) between delivered fixes (Android). */
-  timeInterval: number;
-  /** iOS: batch updates until this much distance (m) accrues. */
-  deferredUpdatesDistance: number;
-  /** iOS: batch updates until this much time (ms) elapses. */
-  deferredUpdatesInterval: number;
+  distanceInterval: number; // min movement (m) between fixes
+  timeInterval: number; // min time (ms) between fixes (Android)
+  deferredUpdatesDistance: number; // iOS: batch until this distance (m) accrues
+  deferredUpdatesInterval: number; // iOS: batch until this time (ms) elapses
 }
 
 const TABLE: Record<MotionState, SamplingParams> = {
@@ -90,7 +80,6 @@ const TABLE: Record<MotionState, SamplingParams> = {
   },
 };
 
-/** Sampling parameters for a motion state. */
 export function paramsFor(state: MotionState): SamplingParams {
   return TABLE[state];
 }

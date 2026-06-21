@@ -1,12 +1,10 @@
 import * as Location from 'expo-location';
 
-// Location permission handling. iOS requires When-In-Use first, then escalation to Always; Android 10+
-// requires foreground granted before background. Each request must be user-initiated so the OS shows
-// the dialogs at a sensible moment (and iOS doesn't waste its one-shot "Always" prompt).
+// iOS escalates When-In-Use → Always; Android 10+ needs foreground before background. Requests must be user-initiated.
 
 export type PermissionStage = 'denied' | 'foreground' | 'background';
 
-/** Current stage WITHOUT prompting (for the settings screen + launch reconciliation). */
+/** Current stage WITHOUT prompting. */
 export async function getStage(): Promise<PermissionStage> {
   const fg = await Location.getForegroundPermissionsAsync();
   if (fg.status !== 'granted') return 'denied';
@@ -14,10 +12,7 @@ export async function getStage(): Promise<PermissionStage> {
   return bg.status === 'granted' ? 'background' : 'foreground';
 }
 
-/**
- * Request the full background ("Always") permission, escalating foreground → background. Returns the
- * highest stage reached so the UI can deep-link to Settings if the user got stuck at foreground.
- */
+/** Escalate foreground → background; returns the highest stage reached. */
 export async function ensureBackgroundPermissions(): Promise<PermissionStage> {
   const fg = await Location.requestForegroundPermissionsAsync();
   if (fg.status !== 'granted') return 'denied';

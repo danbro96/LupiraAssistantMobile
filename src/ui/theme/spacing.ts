@@ -1,5 +1,3 @@
-// 8pt-ish spacing scale. Use these instead of magic numbers so rhythm stays consistent.
-
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -9,7 +7,6 @@ export const spacing = {
   xxl: 32,
 } as const;
 
-// Corner radii.
 export const radii = {
   sm: 6,
   md: 8,
@@ -18,5 +15,5 @@ export const radii = {
   round: 999,
 } as const;
 
-/** Minimum comfortable touch target (also a sensible default hitSlop budget). */
+/** Default hitSlop / minimum comfortable touch target. */
 export const HIT_SLOP = 8;

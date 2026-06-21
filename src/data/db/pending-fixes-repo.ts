@@ -3,10 +3,8 @@ import { boolToInt, intToBool } from './db';
 import { nextSeq } from './seq-repo';
 import type { WireFix } from '../../domain/location-fix';
 
-// The location buffer repo. Writes assign a monotonic seq atomically (seq bump + insert in one
-// transaction); reads return seq-ordered pending rows for the uploader; deletes confirm/drop rows.
+// Writes assign a monotonic seq atomically (seq bump + insert in one transaction).
 
-/** A buffered fix plus its assigned seq, ready to serialize to NDJSON. */
 export interface PendingFix extends WireFix {
   seq: number;
 }
@@ -25,7 +23,7 @@ function insertParams(seq: number, f: WireFix, createdAtMs: number): (string | n
   ];
 }
 
-/** Enqueue a batch of fixes — each gets a fresh monotonic seq, all in ONE crash-safe transaction. */
+/** One transaction so a seq is never burned without a durable row. */
 export async function enqueueFixes(db: Db, fixes: readonly WireFix[], createdAtMs: number): Promise<number[]> {
   const seqs: number[] = [];
   await db.withTransactionAsync(async () => {
@@ -38,7 +36,6 @@ export async function enqueueFixes(db: Db, fixes: readonly WireFix[], createdAtM
   return seqs;
 }
 
-/** Enqueue a single fix. Returns its assigned seq. */
 export async function enqueueFix(db: Db, fix: WireFix, createdAtMs: number): Promise<number> {
   const [seq] = await enqueueFixes(db, [fix], createdAtMs);
   return seq;
@@ -86,7 +83,6 @@ function rowToFix(r: FixRow): PendingFix {
   };
 }
 
-/** Pending fixes (status=0) in seq order, capped at `limit`, for the uploader. */
 export async function selectPending(db: Db, limit: number): Promise<PendingFix[]> {
   const rows = await db.getAllAsync<FixRow>(
     `SELECT * FROM pending_fixes WHERE status = 0 ORDER BY seq ASC LIMIT ?`,
@@ -95,13 +91,12 @@ export async function selectPending(db: Db, limit: number): Promise<PendingFix[]
   return rows.map(rowToFix);
 }
 
-/** Count of pending (un-uploaded) fixes — for the settings screen. */
 export async function pendingCount(db: Db): Promise<number> {
   const row = await db.getFirstAsync<{ n: number }>(`SELECT COUNT(*) AS n FROM pending_fixes WHERE status = 0`);
   return row?.n ?? 0;
 }
 
-/** Delete confirmed rows (inserted/duplicate on the server). Chunks to stay under SQLite's var limit. */
+/** Chunks to stay under SQLite's bound-variable limit. */
 export async function deleteSeqs(db: Db, seqs: readonly number[]): Promise<void> {
   if (seqs.length === 0) return;
   await db.withTransactionAsync(async () => {
@@ -112,12 +107,12 @@ export async function deleteSeqs(db: Db, seqs: readonly number[]): Promise<void>
   });
 }
 
-/** Drop everything at or below the server cursor (cursor-resume on launch). */
+/** Drop everything at or below the server cursor (cursor-resume). */
 export async function deleteUpTo(db: Db, lastSeq: number): Promise<void> {
   await db.runAsync(`DELETE FROM pending_fixes WHERE seq <= ?`, [lastSeq]);
 }
 
-/** Mark permanently-rejected rows (kept for diagnostics, removed from the pending set). */
+/** status=2: kept for diagnostics, out of the pending set. */
 export async function markRejected(db: Db, seqs: readonly number[], reason: string): Promise<void> {
   if (seqs.length === 0) return;
   await db.withTransactionAsync(async () => {
@@ -131,7 +126,6 @@ export async function markRejected(db: Db, seqs: readonly number[], reason: stri
   });
 }
 
-/** Wipe the location buffer (re-registration). */
 export async function clearAll(db: Db): Promise<void> {
   await db.runAsync(`DELETE FROM pending_fixes`);
 }

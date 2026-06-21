@@ -2,9 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import { SECURE_KEYS } from '../../config/secure-keys';
 import type { RegisterDeviceResponse, HealthRecord } from '../../domain/registration';
 
-// The device ingest credential, stored ONLY in the OS secure keystore. `apiKey` (the secret
-// `{keyId:N}.{secret}`) never leaves this module except as the live value handed to the ingest
-// client's Authorization header — never logged, never in Zustand/SQLite.
+// `apiKey` lives ONLY in the OS secure keystore — never logged, never in Zustand/SQLite.
 
 export interface DeviceCredentials {
   apiKey: string;
@@ -15,17 +13,15 @@ export interface DeviceCredentials {
   recordSlug: string | null;
 }
 
-/** The live ingest key for the DeviceKey Authorization header (read fresh each upload). */
+/** Read fresh each upload so rotation/clear takes effect. */
 export async function getApiKey(): Promise<string | null> {
   return SecureStore.getItemAsync(SECURE_KEYS.apiKey);
 }
 
-/** Non-secret identity used in cursor/state query params. */
 export async function getDeviceId(): Promise<string | null> {
   return SecureStore.getItemAsync(SECURE_KEYS.deviceId);
 }
 
-/** Load the full credential set (non-secret fields are mirrored into the device store for the UI). */
 export async function loadCredentials(): Promise<DeviceCredentials | null> {
   const [apiKey, keyId, deviceId, healthRecordId, label, recordSlug] = await Promise.all([
     SecureStore.getItemAsync(SECURE_KEYS.apiKey),
@@ -39,7 +35,7 @@ export async function loadCredentials(): Promise<DeviceCredentials | null> {
   return { apiKey, keyId, deviceId, healthRecordId, label, recordSlug };
 }
 
-/** Persist the credential from a successful registration. The apiKey is shown once — store it now. */
+/** The apiKey is returned once — store it now. */
 export async function saveCredentials(resp: RegisterDeviceResponse, record: HealthRecord): Promise<void> {
   await Promise.all([
     SecureStore.setItemAsync(SECURE_KEYS.apiKey, resp.apiKey),
@@ -51,7 +47,6 @@ export async function saveCredentials(resp: RegisterDeviceResponse, record: Heal
   ]);
 }
 
-/** Wipe the device credential (re-registration / sign-out). */
 export async function clearCredentials(): Promise<void> {
   await Promise.all([
     SecureStore.deleteItemAsync(SECURE_KEYS.apiKey),

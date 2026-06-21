@@ -8,9 +8,7 @@ import { getApiKey } from '../data/secure/device-credentials';
 import { logDebug } from '../debug/log';
 import { toast } from '../feedback/toast';
 
-// OIDC session for the user (used ONLY by the registration/records endpoints — ingest uses the
-// device key). Mirrors LupiraTasksMobile's auth-store: secure-store persistence, coalesced refresh,
-// and AuthPort registration so the data layer reads the live session without importing upward.
+// OIDC session, used ONLY by registration/records endpoints (ingest uses the device key).
 
 let refreshing: Promise<string | null> | null = null;
 
@@ -76,7 +74,7 @@ export const useAuth = create<AuthState & AuthActions>((set, get) => ({
   },
 
   setSession: async (session, user) => {
-    // In-memory first: a rotated refresh token must survive even if persistence fails.
+    // in-memory first: a rotated refresh token must survive a persistence failure
     set({
       token: session.accessToken,
       refreshToken: session.refreshToken ?? null,
@@ -156,15 +154,13 @@ export const useAuth = create<AuthState & AuthActions>((set, get) => ({
   isAuthenticated: () => !!get().token && !!get().user,
 }));
 
-// Register the auth seams the data layer depends on. Runs at module load — App.tsx imports the store
-// during bootstrap, before any request can fire.
+// Runs at module load (App.tsx imports the store during bootstrap, before any request fires).
 setOidcAuthPort({
   getApiUrl: () => useAuth.getState().apiUrl,
   getToken: () => useAuth.getState().token,
   refresh: (force, sentToken) => useAuth.getState().refreshIfNeeded({ force, sentToken }),
 });
 
-// The DeviceKey port shares the base URL with the OIDC port and reads the live key from secure-store.
 setDeviceKeyPort({
   getApiUrl: () => useAuth.getState().apiUrl,
   getApiKey: () => getApiKey(),

@@ -1,9 +1,6 @@
 import type { Db } from './db';
 import type { Stream } from '../../domain/seq';
 
-// Per-(device, stream) sync state: upload high-water, server cursor mirror, pause mirror, last
-// receipt + error. Read by the settings screen and the uploader; written by the uploader/pause-poll.
-
 export interface SyncState {
   deviceId: string;
   stream: Stream;
@@ -58,14 +55,13 @@ export async function read(db: Db, deviceId: string, stream: Stream): Promise<Sy
 }
 
 export interface UploadResult {
-  /** New high-water for last-uploaded; only advances (never lowers). */
+  /** New last-uploaded high-water; only advances, never lowers. */
   advanceTo: number | null;
   highWaterSeq: number | null;
   receiptJson: string;
   at: string;
 }
 
-/** Persist the outcome of an upload cycle. */
 export async function applyUploadResult(db: Db, deviceId: string, stream: Stream, r: UploadResult): Promise<void> {
   await ensureRow(db, deviceId, stream);
   await db.runAsync(
@@ -80,7 +76,7 @@ export async function applyUploadResult(db: Db, deviceId: string, stream: Stream
   );
 }
 
-/** Record the server cursor (after cursor-resume); raises last_uploaded_seq to cover it. */
+/** Also raises last_uploaded_seq to cover the cursor. */
 export async function setCursor(db: Db, deviceId: string, stream: Stream, lastSeq: number | null): Promise<void> {
   await ensureRow(db, deviceId, stream);
   await db.runAsync(
@@ -106,7 +102,6 @@ export async function setError(db: Db, deviceId: string, stream: Stream, error: 
   );
 }
 
-/** Remove all sync state for a device (re-registration). */
 export async function clearForDevice(db: Db, deviceId: string): Promise<void> {
   await db.runAsync(`DELETE FROM sync_state WHERE device_id = ?`, [deviceId]);
 }

@@ -3,10 +3,6 @@ import { OIDC_CLIENT_ID, OIDC_ISSUER } from './oidc-config';
 import { REQUEST_TIMEOUT_MS } from '../../domain/api-error';
 import { logDebug } from '../../debug/log';
 
-// Non-hook OIDC helpers (the interactive login itself lives in the register screen via
-// expo-auth-session's useAuthRequest). Discovery is fetched once and cached. Mirrors the
-// LupiraTasksMobile oidc.ts patterns (manual token POSTs for full status visibility).
-
 export interface TokenSet {
   accessToken: string;
   refreshToken?: string;
@@ -14,10 +10,7 @@ export interface TokenSet {
   expiresIn?: number;
 }
 
-/**
- * A refresh attempt failed. `definitive` = the refresh token/client was rejected (re-auth required);
- * otherwise transient (network/timeout/5xx) — keep the session and retry later.
- */
+/** `definitive` = token/client rejected (re-auth required); else transient — keep session, retry later. */
 export class RefreshError extends Error {
   definitive: boolean;
   constructor(definitive: boolean, message: string) {
@@ -43,7 +36,7 @@ async function postForm(endpoint: string, params: Record<string, string>): Promi
   }
 }
 
-/** Exchange an authorization code for tokens (manual fetch so raw status/body are visible in logs). */
+/** Manual fetch so raw status/body are visible in logs. */
 export async function exchangeAuthCode(params: {
   tokenEndpoint: string;
   code: string;
@@ -79,7 +72,7 @@ let discoveryPromise: Promise<AuthSession.DiscoveryDocument> | null = null;
 
 export function getDiscovery(): Promise<AuthSession.DiscoveryDocument> {
   if (!discoveryPromise) {
-    // Don't cache a failure: a single failed discovery must not poison the cache for the session.
+    // Clear on failure so a failed discovery doesn't poison the cache.
     discoveryPromise = AuthSession.fetchDiscoveryAsync(OIDC_ISSUER).catch((e) => {
       discoveryPromise = null;
       throw e;
@@ -88,7 +81,6 @@ export function getDiscovery(): Promise<AuthSession.DiscoveryDocument> {
   return discoveryPromise;
 }
 
-/** Exchange a refresh token for a fresh access token. Throws RefreshError with a definitive flag. */
 export async function refreshTokens(refreshToken: string): Promise<TokenSet> {
   let discovery: AuthSession.DiscoveryDocument;
   try {
@@ -127,7 +119,7 @@ export async function refreshTokens(refreshToken: string): Promise<TokenSet> {
   };
 }
 
-/** Decode a JWT payload (no signature check — the server verifies; this is for claims only). */
+/** Claims only — no signature check (the server verifies). */
 export function decodeJwt(token: string): Record<string, unknown> {
   const payload = token.split('.')[1];
   if (!payload) return {};

@@ -16,7 +16,7 @@ describe('haversineMeters', () => {
 describe('speedFromDisplacement', () => {
   it('computes m/s from displacement over elapsed time', () => {
     const prev = { lat: 0, lon: 0, tsMs: 0 };
-    const cur = { lat: 0, lon: 0.001, tsMs: 1000 }; // ~111 m in 1 s
+    const cur = { lat: 0, lon: 0.001, tsMs: 1000 };
     const v = speedFromDisplacement(prev, cur);
     expect(v).not.toBeNull();
     expect(v as number).toBeGreaterThan(100);

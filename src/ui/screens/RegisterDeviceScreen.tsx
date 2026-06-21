@@ -17,11 +17,9 @@ import { Button } from '../components/Button';
 import { makeType, radii, spacing, useColors, type Palette } from '../theme';
 import { logDebug } from '../../debug/log';
 
-// Required so the auth redirect back into the app dismisses the in-app browser.
+// Dismisses the in-app browser when the auth redirect returns.
 WebBrowser.maybeCompleteAuthSession();
 
-// Two-step onboarding: (1) OIDC sign-in with Authentik, then (2) register THIS phone as a "Phone"
-// device. On success the RootStack swaps to the settings screen (it branches on device.registered).
 export function RegisterDeviceScreen() {
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);

@@ -14,8 +14,7 @@ import * as syncState from '../data/db/sync-state-repo';
 import type { DeviceKind } from '../domain/registration';
 import { logDebug } from '../debug/log';
 
-// Non-secret mirror of the registered device (the secret apiKey lives ONLY in secure-store). Drives
-// the register screen and the settings header. Owns the one-time registration orchestration.
+// Non-secret mirror of the registered device; the apiKey lives ONLY in secure-store.
 
 interface DeviceState {
   loaded: boolean;
@@ -30,9 +29,8 @@ interface DeviceState {
 
 interface DeviceActions {
   load: () => Promise<void>;
-  /** One-time registration: bootstrap record → register Phone → persist key → reset local buffers. */
+  /** bootstrap record → register Phone → persist key → reset local buffers */
   register: (label: string) => Promise<{ ok: boolean; error?: string }>;
-  /** Wipe credentials + local buffers so a fresh device can register. */
   clear: () => Promise<void>;
 }
 
@@ -62,13 +60,11 @@ export const useDevice = create<DeviceState & DeviceActions>((set) => ({
 
   register: async (label) => {
     try {
-      // Single-user: the personal record from bootstrap is the default target. (GET /api/records is
-      // available for multi-record selection later.)
       const record = await bootstrap();
       const resp = await registerDevice({ healthRecordId: record.id, kind: 'Phone', label });
       await saveCredentials(resp, record);
 
-      // Fresh device → reset the local streams and clear any stale buffer, then seed sync state.
+      // fresh device: reset local streams, clear stale buffers, seed sync state
       const db = await getDb();
       await resetSeq(db, 'location');
       await resetSeq(db, 'ring');

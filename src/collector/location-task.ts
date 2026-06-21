@@ -22,10 +22,7 @@ import {
 import { speedFromDisplacement } from '../domain/geo';
 import { logDebug } from '../debug/log';
 
-// THE BACKGROUND ENTRY POINT. Defined at module top level because the OS runs this in a bare JS
-// context (no React tree) — index.ts imports this file so the defineTask() call runs during that
-// context's cold start. The body does fast, network-free work: cheap pause check → classify motion →
-// map fixes → ONE atomic transaction that assigns seq + inserts. Uploads happen elsewhere.
+// Defined at module top level: OS runs this in a bare JS context (no React tree), registered during cold start.
 
 TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
   if (error) {
@@ -38,7 +35,7 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
   try {
     const db = await getDb();
 
-    // Respect the kill-switch: while paused, discard fixes (no seq assigned) — matches the server.
+    // discard fixes while paused (matches server)
     if (await collectorMeta.isPausedCached(db)) return;
 
     const batteryPct = await readBatteryPct();
@@ -47,7 +44,7 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
     const prev = await collectorMeta.getLastFix(db);
     const last = locations[locations.length - 1]!;
 
-    // Effective speed for classification: prefer the GPS-measured value, else derive from displacement.
+    // prefer GPS-measured speed, else derive from displacement
     const measured = typeof last.coords.speed === 'number' && last.coords.speed >= 0;
     let speedMps: number | null = measured ? last.coords.speed : null;
     if (!measured && prev) {
@@ -60,7 +57,7 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
 
     const reading = classifyMotion({ speedMps, speedMeasured: measured, stepsPerMin: null });
 
-    // Debounce the committed motion state so a single noisy sample doesn't flap the sampling profile.
+    // debounce so one noisy sample doesn't flap the sampling profile
     const prevDebounce = await collectorMeta.getMotionDebounce(db);
     const { next: nextDebounce, changed } = debounceMotion(prevDebounce, reading.state);
     const committed = nextDebounce.state;
@@ -80,8 +77,7 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
     await collectorMeta.setMotionDebounce(db, nextDebounce);
     await collectorMeta.setLastFix(db, { lat: last.coords.latitude, lon: last.coords.longitude, tsMs: last.timestamp });
 
-    // Adapt sampling density to the new motion state — even while the app is killed. Only on a real
-    // (debounced) change, so we don't churn the updates task on every batch. Best-effort.
+    // reconfigure only on a real (debounced) change, so we don't churn the task every batch
     if (changed) {
       logDebug('collector:motion-change', committed);
       try {

@@ -8,9 +8,7 @@ import { pollTrackingState } from './pause-poll';
 import { refreshSyncStatus, useSyncStatus } from './sync-status';
 import { logDebug } from '../debug/log';
 
-// Drives upload cycles with a single-flight lock so only one runs at a time (NetInfo reconnect, app
-// foreground, periodic background task, and explicit kicks all funnel through here). The idempotent
-// server + WAL DB make any rare overlap harmless. Loops runLocationUpload until idle/paused/error.
+// Single-flight lock: all triggers (reconnect, foreground, background task, explicit kicks) funnel through one cycle.
 
 let running = false;
 
@@ -60,7 +58,7 @@ export async function kickSync(opts: KickOptions = {}): Promise<void> {
   }
 }
 
-/** Wire connectivity + foreground triggers. Returns an unsubscribe. Call once from App.tsx. */
+/** Wire connectivity + foreground triggers; returns an unsubscribe. Call once from App.tsx. */
 export function startSyncTriggers(): () => void {
   const netUnsub = NetInfo.addEventListener((state) => {
     const online = !!state.isConnected && state.isInternetReachable !== false;

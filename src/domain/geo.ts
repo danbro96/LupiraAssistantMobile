@@ -1,13 +1,10 @@
-// Pure geo helpers used by the motion classifier when expo-location doesn't report `coords.speed`
-// (common on Android network fixes, where speed is -1/unknown).
-
 const EARTH_RADIUS_M = 6_371_000;
 
 function toRad(deg: number): number {
   return (deg * Math.PI) / 180;
 }
 
-/** Great-circle distance between two lat/lon points, in meters. */
+// Great-circle distance in meters.
 export function haversineMeters(aLat: number, aLon: number, bLat: number, bLon: number): number {
   const dLat = toRad(bLat - aLat);
   const dLon = toRad(bLon - aLon);
@@ -23,11 +20,7 @@ export interface GeoPoint {
   tsMs: number;
 }
 
-/**
- * Speed (m/s) inferred from the displacement between two points over elapsed time. Returns null when
- * the time delta is non-positive (clock went backwards / duplicate timestamp) so the caller can fall
- * back to "unknown".
- */
+// Null when Δt is non-positive (clock went backwards / duplicate ts) → caller falls back to "unknown".
 export function speedFromDisplacement(prev: GeoPoint, cur: GeoPoint): number | null {
   const dtSec = (cur.tsMs - prev.tsMs) / 1000;
   if (dtSec <= 0) return null;

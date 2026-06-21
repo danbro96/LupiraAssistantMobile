@@ -6,8 +6,7 @@ import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// Gate on device registration: an unregistered phone sees the onboarding/register flow; once a device
-// key is stored, the app shows the settings/status screen.
+// Gated on device registration: register flow until a device key is stored, then settings.
 export function RootStack() {
   const registered = useDevice((s) => s.registered);
 

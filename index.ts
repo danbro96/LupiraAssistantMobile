@@ -1,12 +1,10 @@
-// Must be first: polyfill global `crypto` (for uuid) before any module that mints an id loads.
+// Must be first: polyfill global `crypto` before any module that mints a uuid loads.
 import './src/polyfills/crypto';
 
-// gesture-handler must be imported once, before any react-native rendering, in the entry file.
+// Must be imported once in the entry file, before any react-native rendering.
 import 'react-native-gesture-handler';
 
-// Register the background TaskManager tasks at module top level (BEFORE React renders). The OS may
-// spin up a bare JS context to run these with no app UI, so the defineTask() calls must run during
-// the cold start of that context — importing them here guarantees that.
+// defineTask() must run during cold start of the OS's bare JS context, so register at module top level.
 import './src/collector/location-task';
 import './src/sync/background-upload-task';
 
@@ -14,6 +12,4 @@ import { registerRootComponent } from 'expo';
 
 import App from './App';
 
-// registerRootComponent calls AppRegistry.registerComponent('main', () => App) and sets up the
-// environment for both Expo Go and native builds.
 registerRootComponent(App);

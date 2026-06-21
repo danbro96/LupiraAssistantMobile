@@ -1,7 +1,4 @@
-// NDJSON serialization for ingest bodies: one compact JSON object per line, no trailing newline
-// (the server splits on '\n', and a trailing empty line would count as a malformed row). Pure.
-
-/** UTF-8 byte length of a string without relying on Node's Buffer (works in RN + node). */
+// No trailing newline — server splits on '\n' and a trailing empty line counts as a malformed row.
 export function utf8ByteLength(s: string): number {
   let bytes = 0;
   for (let i = 0; i < s.length; i++) {
@@ -9,7 +6,7 @@ export function utf8ByteLength(s: string): number {
     if (c < 0x80) bytes += 1;
     else if (c < 0x800) bytes += 2;
     else if (c >= 0xd800 && c <= 0xdbff) {
-      // High surrogate — a full code point is 4 UTF-8 bytes; skip the paired low surrogate.
+      // High surrogate: 4 UTF-8 bytes; skip the paired low surrogate.
       bytes += 4;
       i++;
     } else bytes += 3;

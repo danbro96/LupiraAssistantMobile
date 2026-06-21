@@ -23,7 +23,7 @@ const ctx: MapContext = {
 describe('mapToWireFix', () => {
   it('maps coords to the snake_case wire shape and rounds floats to 1dp', () => {
     const f = mapToWireFix(sample(), ctx);
-    expect(f.lat).toBe(59.3293); // lat/lon are NOT rounded
+    expect(f.lat).toBe(59.3293); // lat/lon are not rounded
     expect(f.lon).toBe(18.0686);
     expect(f.accuracy_m).toBe(8.5);
     expect(f.altitude_m).toBe(42.4);
@@ -44,7 +44,7 @@ describe('mapToWireFix', () => {
     const f = mapToWireFix(sample({ heading: -1, speed: -1, accuracy: 1500 }), ctx);
     expect(f.heading_deg).toBeNull();
     expect(f.speed_mps).toBeNull();
-    expect(f.accuracy_m).toBe(1500); // low accuracy is FLAGGED, never dropped
+    expect(f.accuracy_m).toBe(1500); // low accuracy is flagged, never dropped
   });
 
   it('sets is_mock from the (Android-only) mocked flag, defaulting to false', () => {

@@ -1,6 +1,3 @@
-// Color tokens for light and dark schemes. Both palettes share the same keys (Palette), so
-// components consume `useColors()` and switch automatically with the system theme.
-
 export interface Palette {
   bg: string;
   surface: string;
@@ -73,5 +70,5 @@ export const darkColors: Palette = {
   toastAction: '#6ee7a8',
 };
 
-/** Default (light) palette — for any non-component context that can't use the hook. */
+/** Fallback palette for non-component contexts that can't use the hook. */
 export const colors = lightColors;

@@ -10,9 +10,7 @@ import { DeviceKeyInvalidError } from '../domain/api-error';
 import { MAX_BATCH_LINES, MAX_BATCH_BYTES, UPLOAD_FETCH_LIMIT } from '../config/env';
 import { logDebug } from '../debug/log';
 
-// One location upload cycle: read pending fixes (seq order) → batch under the line/byte caps →
-// POST NDJSON → apply the receipt (delete confirmed, drop permanent rejects, advance high-water) →
-// persist sync state. Idempotent server, so a failed POST is simply retried next cycle (no data loss).
+// Server is idempotent, so a failed POST is retried next cycle (no data loss).
 
 export type UploadStatus = 'idle' | 'uploaded' | 'paused' | 'error' | 'unregistered';
 
@@ -26,13 +24,12 @@ export interface UploadOutcome {
 }
 
 export async function runLocationUpload(db: Db, deviceId: string): Promise<UploadOutcome> {
-  // Cheap local pause check (mirror of the server's tracking state) — don't upload while paused.
   if (await collectorMeta.isPausedCached(db)) return { status: 'paused' };
 
   const pending = await fixesRepo.selectPending(db, UPLOAD_FETCH_LIMIT);
   if (pending.length === 0) return { status: 'idle' };
 
-  // A PendingFix is already the exact wire shape (snake_case + seq); serialize directly.
+  // PendingFix is already the wire shape; serialize directly.
   const items: BatchItem[] = pending.map((f) => {
     const json = JSON.stringify(f);
     return { seq: f.seq, json, bytes: utf8ByteLength(json) };

@@ -1,8 +1,7 @@
 import type { Db } from './db';
 import { nextSeq } from './seq-repo';
 
-// Ring buffer repo (phase 2 — created now, populated when Health Connect / HealthKit is wired). Same
-// store-and-forward shape as pending-fixes: atomic seq assignment + seq-ordered reads.
+// Phase 2 — populated when Health Connect / HealthKit is wired. Same store-and-forward shape as pending-fixes.
 
 export type RingKind = 'hr' | 'hrv' | 'spo2' | 'skin_temp' | 'steps' | 'activity';
 

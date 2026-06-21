@@ -64,8 +64,8 @@ describe('debounceMotion (hysteresis)', () => {
 
   it('a flap back to the committed state clears the pending candidate', () => {
     const start = { state: MotionState.Walk, pending: null, pendingCount: 0 };
-    const r1 = debounceMotion(start, MotionState.Run); // pending=run
-    const r2 = debounceMotion(r1.next, MotionState.Walk); // back to committed
+    const r1 = debounceMotion(start, MotionState.Run);
+    const r2 = debounceMotion(r1.next, MotionState.Walk);
     expect(r2.changed).toBe(false);
     expect(r2.next.pending).toBeNull();
     expect(r2.next.pendingCount).toBe(0);

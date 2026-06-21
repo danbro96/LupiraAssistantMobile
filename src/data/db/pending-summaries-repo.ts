@@ -1,8 +1,7 @@
 import type { Db } from './db';
 import { nextSeq } from './seq-repo';
 
-// Summaries buffer repo (phase 2). Note: server `kind` is an INTEGER (smallint), and periods are
-// camelCase on the wire (periodStart/periodEnd) — see the serializer in sync/.
+// Phase 2. Server `kind` is an INTEGER (smallint); periods are camelCase on the wire.
 
 export interface DeviceSummary {
   kind: number;

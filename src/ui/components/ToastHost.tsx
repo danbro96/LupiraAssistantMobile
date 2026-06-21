@@ -4,10 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, spacing } from '../theme';
 import { useToast } from '../../feedback/toast';
 
-// The imperative toast API + store live in feedback/toast (a cross-cutting leaf, so non-UI layers
-// can call `toast()` without importing the UI). This file is just the visual host.
-
-/** Mount once near the app root (inside SafeAreaProvider). Renders the current toast, if any. */
+/** Mount once near the app root, inside SafeAreaProvider. */
 export function ToastHost() {
   const message = useToast(s => s.message);
   const action = useToast(s => s.action);

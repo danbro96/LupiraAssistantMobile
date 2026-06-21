@@ -10,10 +10,6 @@ import { Button } from '../components/Button';
 import { makeType, radii, spacing, useColors, type Palette } from '../theme';
 import { toast } from '../../feedback/toast';
 
-// Minimal settings: device identity, collection toggle, server pause banner, last-upload status, and
-// an API-URL override for dev. Reads live status from the sync-status store (refreshed on mount and
-// after each upload kick).
-
 export function SettingsScreen() {
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
@@ -91,7 +87,6 @@ export function SettingsScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      {/* Device */}
       <Text style={styles.section}>DEVICE</Text>
       <View style={styles.card}>
         <Row label="Label" value={device.label ?? '—'} c={c} />
@@ -100,7 +95,6 @@ export function SettingsScreen() {
         <Row label="Key id" value={device.keyId ?? '—'} c={c} mono />
       </View>
 
-      {/* Collection */}
       <Text style={styles.section}>COLLECTION</Text>
       <View style={styles.card}>
         <View style={styles.toggleRow}>
@@ -116,7 +110,6 @@ export function SettingsScreen() {
         ) : null}
       </View>
 
-      {/* Upload status */}
       <Text style={styles.section}>UPLOAD STATUS</Text>
       <View style={styles.card}>
         <Row label="Connectivity" value={status.online ? 'online' : 'offline'} c={c} />
@@ -129,7 +122,6 @@ export function SettingsScreen() {
         <Button title="Upload now" onPress={onUploadNow} style={styles.btn} />
       </View>
 
-      {/* Dev: API URL */}
       <Text style={styles.section}>SERVER</Text>
       <View style={styles.card}>
         <Text style={styles.rowLabel}>API base URL</Text>

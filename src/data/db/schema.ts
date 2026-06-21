@@ -1,9 +1,4 @@
-// SQLite schema for the store-and-forward buffer. WAL + a busy timeout let the foreground app and
-// the headless background location task (separate JS contexts, separate connections to the same file)
-// write concurrently without "database is locked" errors. seq is the device-monotonic value AND the
-// local primary key, so cursor-drop and receipt-confirm are simple range/IN deletes.
-//
-// The ring/summaries buffers are created now but populated in phase 2 (Health Connect / HealthKit).
+// WAL + busy timeout let the foreground app and the background task (separate connections) write concurrently; seq is the monotonic value AND the PK.
 
 export const SCHEMA_SQL = `
 PRAGMA journal_mode = WAL;

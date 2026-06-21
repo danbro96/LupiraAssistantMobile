@@ -10,10 +10,7 @@ import type {
   TrackingState,
 } from '../../domain/receipts';
 
-// DeviceKey-authenticated ingest client (NDJSON upload + cursor/state reads). Reads the live key from
-// the secure keystore each call (so rotation/clear takes effect immediately). Ingest is idempotent
-// server-side (dedupe on seq) so all calls are safe to auto-retry. A 401 means the key was revoked →
-// DeviceKeyInvalidError (the caller re-registers; it must NOT try OIDC re-auth here).
+// Reads the live key each call so rotation/clear takes effect immediately; 401 = revoked key → re-register, not OIDC re-auth.
 
 async function authedFetch(path: string, init: RequestInit): Promise<Response> {
   const port = deviceKeyPort();
@@ -31,7 +28,6 @@ async function authedFetch(path: string, init: RequestInit): Promise<Response> {
   }
 }
 
-/** POST a batch of location fixes as NDJSON. Returns the 202 receipt. */
 export async function postLocation(_deviceId: string, ndjsonBody: string): Promise<LocationIngestReceipt> {
   const res = await authedFetch('/api/ingest/location', {
     method: 'POST',
@@ -41,7 +37,6 @@ export async function postLocation(_deviceId: string, ndjsonBody: string): Promi
   return (await res.json()) as LocationIngestReceipt;
 }
 
-/** POST a batch of ring samples as NDJSON (phase 2). */
 export async function postRing(_deviceId: string, ndjsonBody: string): Promise<RingIngestReceipt> {
   const res = await authedFetch('/api/ingest/ring', {
     method: 'POST',
@@ -51,7 +46,6 @@ export async function postRing(_deviceId: string, ndjsonBody: string): Promise<R
   return (await res.json()) as RingIngestReceipt;
 }
 
-/** POST a batch of device summaries as NDJSON (phase 2). */
 export async function postSummaries(_deviceId: string, ndjsonBody: string): Promise<SummariesIngestReceipt> {
   const res = await authedFetch('/api/ingest/summaries', {
     method: 'POST',
@@ -61,7 +55,7 @@ export async function postSummaries(_deviceId: string, ndjsonBody: string): Prom
   return (await res.json()) as SummariesIngestReceipt;
 }
 
-/** Resume cursor: the highest location seq the server has accepted for this device. */
+/** Highest location seq the server has accepted (resume cursor). */
 export async function getCursor(deviceId: string): Promise<LocationCursor> {
   const res = await authedFetch(`/api/ingest/location/cursor?deviceId=${encodeURIComponent(deviceId)}`, {
     method: 'GET',
@@ -69,7 +63,7 @@ export async function getCursor(deviceId: string): Promise<LocationCursor> {
   return (await res.json()) as LocationCursor;
 }
 
-/** Tracking pause state (the kill switch). When paused, stop collecting + uploading. */
+/** Server pause/kill-switch state; when paused, stop collecting + uploading. */
 export async function getState(deviceId: string): Promise<TrackingState> {
   const res = await authedFetch(`/api/ingest/location/state?deviceId=${encodeURIComponent(deviceId)}`, {
     method: 'GET',

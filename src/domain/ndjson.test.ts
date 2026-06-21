@@ -7,8 +7,8 @@ describe('utf8ByteLength', () => {
   });
 
   it('counts multi-byte code points correctly', () => {
-    expect(utf8ByteLength('é')).toBe(2); // U+00E9
-    expect(utf8ByteLength('€')).toBe(3); // U+20AC
+    expect(utf8ByteLength('é')).toBe(2);
+    expect(utf8ByteLength('€')).toBe(3);
     expect(utf8ByteLength('😀')).toBe(4); // surrogate pair → 4 bytes
   });
 });
