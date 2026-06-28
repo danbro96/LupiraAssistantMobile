@@ -66,7 +66,7 @@ Two planes. The mobile app is the only surface Daniel touches; everything else i
 | Plans for today and this week | Start of day; start of week | Tasks, calendar |
 | Event clarification: attendees, description, location, travel | An upcoming event scores low on completeness, weighted by proximity | The event |
 | Follow-up on a past event | Shortly after the event ends | Tasks, event notes |
-| New contact, or missing contact details | An unknown or incomplete person appears in comms or events | Contacts |
+| New contact, or missing contact details | A relevant contact scores low on completeness (upcoming-event attendee / recent), or an unknown person appears in comms | Contacts |
 | Mood and health | A regular check-in cadence; after notable activity | Wellbeing log |
 | Skills, projects, career status | A periodic review cadence | Career record |
 
@@ -99,10 +99,10 @@ The calendar is the solution's universal scheduling and temporal-tracking substr
 
 **System calendars — the assistant's substrate, normally hidden from my agenda**
 - All-events inbox — the superset of every external event seen (Facebook and other sources), a source of truth whether or not I plan to attend; Capture proposes from here into the agenda calendars.
-- Prompts — the assistant's scheduled prompt work: Elicit questions, plus research/aggregation that often spawns follow-up prompts. Each is an event-bound prompt that fires at the right time.
+- LlmPrompts — the assistant's scheduled prompt work: Elicit questions, plus research/aggregation that often spawns follow-up prompts. Each is an event-bound prompt that fires at the right time.
 - DevOps routines — recurring operational tasks (package upgrades) as event-bound prompts that fire the assistant to act.
 
-System calendars run on event-bound prompts: a system event carries a prompt that fires as an internal signal when it occurs.
+System calendars run on event-bound payloads — a system event carries a contracted LLM prompt or a deterministic action that fires as an internal signal when it occurs. Scheduled actions carry a **typed contract** (intent, target, expected output), so outcomes are predictable rather than free-form LLM latitude.
 
 **Grounded in the calendar service (cal-api).** Most of this already exists there — many calendars with owner/read-write/read sharing, and the Inbox→committed lifecycle as the existing per-calendar Proposed/Accepted membership. The additions are small: a calendar class (agenda vs system), an event-bound prompt on items, and partial-day availability; iCal/vCard become generated projections with the structured record canonical. Reliable firing — retry, catch-up, idempotency — is handled by a **dedicated scheduler/worker**, not a naive calendar timer, which resolves the job-runner caveat. Full design: `LupiraCalApi/docs/temporal-backbone.md`.
 
@@ -133,6 +133,7 @@ Captured to keep v1 scoping honest; none ship in the first release.
 - **Jellyfin** — answer media questions: what's newly added, and whether a title already exists in the library.
 - **Nextcloud (read-only)** — read files and notes for context when proposing or answering.
 - **Recipes and food log** — handle recipes and track what I've eaten, in a dedicated store with its own API; a new wellbeing-adjacent record domain the assistant can elicit (meals) and propose from (recipe plans).
+- **Message archive** — a standalone, read-only archive of historical comms exports (Facebook/Messenger first), queryable full-text + semantically, for researching past ventures and events. Built from deliberate data exports, **outside** the capture→confirm flow; the assistant may query it read-only during research. Design: `LupiraArchiveApi/docs/archive-backbone.md`.
 
 ## Deferred (consequences, not vision)
 Which APIs, batch-vs-service, ingestion topology, schemas, and deployment are derived from this brief and documented in the architecture layer:
@@ -140,3 +141,4 @@ Which APIs, batch-vs-service, ingestion topology, schemas, and deployment are de
 - `LupiraTasksApi/docs/tracking-backbone.md` — the tracked-to-done backlog.
 - `GptApi/docs/llm-gateway-backbone.md` — the LLM gateway.
 - `LupiraAssistantApi/docs/assistant-backbone.md` — the hub (P0 core loop); ties the above together.
+- `LupiraArchiveApi/docs/archive-backbone.md` — historical comms archive + research search (adjacent; outside the assistant flow).
