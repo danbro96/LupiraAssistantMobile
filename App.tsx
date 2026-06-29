@@ -9,6 +9,7 @@ import { RootStack } from './src/ui/navigation/RootStack';
 import { ToastHost } from './src/ui/components/ToastHost';
 import { useAuth } from './src/state/auth-store';
 import { useDevice } from './src/state/device-store';
+import { useInbox } from './src/state/inbox-store';
 import { useCollector } from './src/state/collector-store';
 import { startSyncTriggers, kickSync } from './src/sync/sync-engine';
 import { registerUploadTask } from './src/sync/background-upload-task';
@@ -53,7 +54,11 @@ function App() {
 
   useEffect(() => {
     void (async () => {
-      await Promise.all([useAuth.getState().load(), useDevice.getState().load()]);
+      await Promise.all([
+        useAuth.getState().load(),
+        useDevice.getState().load(),
+        useInbox.getState().loadFromCache(),
+      ]);
       await useAuth.getState().refreshIfNeeded();
       await useCollector.getState().hydrate();
       await registerUploadTask();

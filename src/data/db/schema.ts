@@ -83,6 +83,13 @@ CREATE TABLE IF NOT EXISTS collector_meta (
   v TEXT NOT NULL
 );
 
+-- Read-only Inbox cache: the whole last assistant-api feed stored as one JSON blob so the screen renders offline.
+CREATE TABLE IF NOT EXISTS inbox_cache (
+  key        TEXT PRIMARY KEY,
+  json       TEXT    NOT NULL,
+  fetched_at INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS schema_meta (key TEXT PRIMARY KEY, value TEXT);
 INSERT OR IGNORE INTO schema_meta (key, value) VALUES ('version', '1');
 `;

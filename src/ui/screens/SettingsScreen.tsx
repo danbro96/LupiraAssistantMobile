@@ -5,6 +5,8 @@ import { useCollector } from '../../state/collector-store';
 import { useSyncStatus, refreshSyncStatus } from '../../sync/sync-status';
 import { kickSync } from '../../sync/sync-engine';
 import { useAuth } from '../../state/auth-store';
+import { useInbox } from '../../state/inbox-store';
+import { launchConnect } from '../../data/auth/connect';
 import { getDb } from '../../data/db/db';
 import { Button } from '../components/Button';
 import { makeType, radii, spacing, useColors, type Palette } from '../theme';
@@ -19,10 +21,14 @@ export function SettingsScreen() {
   const status = useSyncStatus();
   const locationApiUrl = useAuth((s) => s.locationApiUrl);
   const healthApiUrl = useAuth((s) => s.healthApiUrl);
+  const assistantApiUrl = useAuth((s) => s.assistantApiUrl);
+  const grantStatus = useInbox((s) => s.grantStatus);
   const mirror = useSyncStatus((s) => s.mirror);
 
   const [locationUrlDraft, setLocationUrlDraft] = useState(locationApiUrl);
   const [healthUrlDraft, setHealthUrlDraft] = useState(healthApiUrl);
+  const [assistantUrlDraft, setAssistantUrlDraft] = useState(assistantApiUrl);
+  const [connecting, setConnecting] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!device.deviceId) return;
@@ -69,8 +75,19 @@ export function SettingsScreen() {
     await Promise.all([
       useAuth.getState().setLocationApiUrl(locationUrlDraft.trim()),
       useAuth.getState().setHealthApiUrl(healthUrlDraft.trim()),
+      useAuth.getState().setAssistantApiUrl(assistantUrlDraft.trim()),
     ]);
     toast('Server URLs saved.');
+  }
+
+  async function onConnect() {
+    setConnecting(true);
+    const res = await launchConnect(assistantApiUrl);
+    if (res === 'returned') {
+      await useInbox.getState().refreshGrant();
+      toast('Assistant connection updated.');
+    }
+    setConnecting(false);
   }
 
   function onReRegister() {
@@ -115,6 +132,18 @@ export function SettingsScreen() {
         ) : null}
       </View>
 
+      <Text style={styles.section}>ASSISTANT</Text>
+      <View style={styles.card}>
+        <Row label="Grant" value={grantStatus} c={c} />
+        <Button
+          title={grantStatus === 'connected' ? 'Reconnect assistant' : 'Connect assistant'}
+          variant="secondary"
+          onPress={() => void onConnect()}
+          loading={connecting}
+          style={styles.btn}
+        />
+      </View>
+
       <Text style={styles.section}>UPLOAD STATUS</Text>
       <View style={styles.card}>
         <Row label="Connectivity" value={status.online ? 'online' : 'offline'} c={c} />
@@ -143,6 +172,16 @@ export function SettingsScreen() {
         <TextInput
           value={healthUrlDraft}
           onChangeText={setHealthUrlDraft}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+          style={styles.input}
+          placeholderTextColor={c.textSubtle}
+        />
+        <Text style={[styles.rowLabel, { marginTop: spacing.sm }]}>Assistant API URL</Text>
+        <TextInput
+          value={assistantUrlDraft}
+          onChangeText={setAssistantUrlDraft}
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="url"
