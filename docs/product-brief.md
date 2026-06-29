@@ -9,7 +9,7 @@ A personal chief-of-staff — a private instance for each user — that keeps th
 Actionable life-admin (meetings, deadlines, people, plans) arrives scattered across Telegram, two email accounts, and Facebook. Turning it into calendar/task/contact entries — and being reminded in time — is manual today, or outsourced to Big Tech assistants. Daniel wants that capability on his own infrastructure.
 
 ## Three pillars
-1. **Capture** — read incoming comms, recognise what's actionable, and propose calendar/task/contact entries for one-tap approval. *(Reactive: input is an external signal.)*
+1. **Capture** — read incoming comms, grouped into conversation topics rather than isolated messages, recognise what's actionable, and propose calendar/task/contact entries for one-tap approval. *(Reactive: input is an external signal.)*
 2. **Prompt** — from held calendar/task state (+ time and location), surface timely nudges: what's next, when to leave, trip/travel prompts, slipping tasks. *(Assistant tells me something.)*
 3. **Elicit** — proactively ask me questions, timed by my schedule and activity, to keep the record rich and current: clarify thinly-documented events, plan the day and week, follow up on past events, complete contacts, and log mood/health and career status. My answers are written straight back. *(Assistant asks me something; input is me.)*
 
@@ -26,7 +26,7 @@ Actionable life-admin (meetings, deadlines, people, plans) arrives scattered acr
 ## Principles
 - **Proactive, not conversational** — the assistant always initiates: proposals, prompts, and questions. I only ever respond — a tap or a short answer — and never drive an open-ended query. No voice, no chat thread.
 - **Consent-first** — ask before any create or update. Always, no exceptions: nothing is written without my explicit approval.
-- **Sovereign** — self-hosted end to end, including the LLM; personal content never leaves the LAN.
+- **Sovereign** — self-hosted end to end, including the LLM; personal content never leaves the LAN. Comms are captured and retained in full on his own infrastructure — integral to how it works, not an opt-in add-on.
 - **Multi-user, LLM-isolated** — many people use the assistant, each a private tenant. Every LLM interaction is scoped to one user: no prompt, context, memory, or model state ever crosses users. Data is the exception — calendars, contacts, and task lists can be shared at the database plane through explicit access grants; wellbeing and career stay private. Even shared data enters the LLM only on one user's own request, under that user's access.
 - **Anti-fatigue** — high-signal, batched, one-tap; it earns every interruption.
 - **Additive** — it reads alongside my comms apps; it doesn't try to replace them.
@@ -35,7 +35,7 @@ Actionable life-admin (meetings, deadlines, people, plans) arrives scattered acr
 - Not a chatbot or voice assistant.
 - Not a replacement for Telegram / email / Messenger as clients.
 - Not a shared or team assistant — each user's assistant, reasoning, and memory are theirs alone; only the underlying data is ever shared, and only by explicit grant.
-- Its scope is Daniel's personal record — calendar, tasks, contacts, notes, wellbeing, career. It does not archive, index, or search message content beyond what a proposal or a question needs.
+- Its scope is Daniel's personal record — calendar, tasks, contacts, notes, wellbeing, career. Comms are captured and retained to feed that record and his own research, not as a standalone product.
 
 ## Signals — user-facing vs internal
 Two planes. The mobile app is the only surface Daniel touches; everything else is invisible plumbing.
@@ -74,8 +74,8 @@ Two planes. The mobile app is the only surface Daniel touches; everything else i
 
 | Input | Triggers | Drives |
 |---|---|---|
-| Telegram messages | As each message arrives (near-real-time) | Capture — extract actionable items |
-| Gmail and Outlook mail | As each mail arrives (near-real-time) | Capture — extract actionable items |
+| Telegram messages | When a conversation topic goes quiet — grouped into topics, not per message | Capture — extract actionable items |
+| Gmail and Outlook mail | When a mail thread or topic settles | Capture — extract actionable items |
 | Facebook event invites | Checked periodically from the events feed | Capture — propose event |
 | Location and presence | On a movement event — arrival, departure, approaching a destination | Prompt — leave-by, trips |
 | Health: sleep, activity (Phase 2) | Checked periodically, plus threshold crossings | Prompt — wellness-aware scheduling |
@@ -120,7 +120,7 @@ The assistant keeps its own lists and calendars, separate from mine. Per-user ag
 ## Success signals
 - Share of events/tasks that arrived as an accepted proposal vs hand-entered.
 - Proposal precision (approve vs dismiss) stays high — noise stays low.
-- Time from message → filed.
+- Time from a conversation topic settling → filed.
 - Missed-event rate → ~0.
 - I stop reflexively opening Google Calendar / Outlook.
 
@@ -133,7 +133,7 @@ Captured to keep v1 scoping honest; none ship in the first release.
 - **Jellyfin** — answer media questions: what's newly added, and whether a title already exists in the library.
 - **Nextcloud (read-only)** — read files and notes for context when proposing or answering.
 - **Recipes and food log** — handle recipes and track what I've eaten, in a dedicated store with its own API; a new wellbeing-adjacent record domain the assistant can elicit (meals) and propose from (recipe plans).
-- **Message archive** — a standalone, read-only archive of historical comms exports (Facebook/Messenger first), queryable full-text + semantically, for researching past ventures and events. Built from deliberate data exports, **outside** the capture→confirm flow; the assistant may query it read-only during research. Design: `LupiraArchiveApi/docs/archive-backbone.md`.
+- **Historical comms research** — the comms substrate (`comms-api`) backfills the user's full message history (Facebook export first — the conversations since he started using it) into its corpus, retained in full, and makes it queryable full-text + semantically for researching past ventures and events. An optional retention policy may come in a later phase. Design: `LupiraCommsApi/docs/comms-backbone.md`.
 
 ## Deferred (consequences, not vision)
 Which APIs, batch-vs-service, ingestion topology, schemas, and deployment are derived from this brief and documented in the architecture layer:
@@ -141,4 +141,4 @@ Which APIs, batch-vs-service, ingestion topology, schemas, and deployment are de
 - `LupiraTasksApi/docs/tracking-backbone.md` — the tracked-to-done backlog.
 - `GptApi/docs/llm-gateway-backbone.md` — the LLM gateway.
 - `LupiraAssistantApi/docs/assistant-backbone.md` — the hub (P0 core loop); ties the above together.
-- `LupiraArchiveApi/docs/archive-backbone.md` — historical comms archive + research search (adjacent; outside the assistant flow).
+- `LupiraCommsApi/docs/comms-backbone.md` — the comms substrate: live ingestion, semantic topic segmentation, and research search; feeds the assistant closed topics for capture.
